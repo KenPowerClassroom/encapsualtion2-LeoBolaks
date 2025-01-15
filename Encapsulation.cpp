@@ -16,7 +16,13 @@ public:
     }
 
     void withdraw(double amount) {
-        balance -= amount;
+        if (balance > amount) {
+            balance -= amount;
+            std::cout << "Withdrawal successful. New balance: $" << balance << std::endl;
+        }
+        else {
+            std::cout << "Insufficient funds for withdrawal." << std::endl;
+        }
     }
 };
 class HeatingSystem {
@@ -28,6 +34,7 @@ public:
     void turnOff() {
         std::cout << "Heating system turned off." << std::endl;
     }
+
 };
 
 class Thermostat {
@@ -40,6 +47,20 @@ public:
     double getCurrentTemperature() const {
         return currentTemperature;
     }
+
+    void keepTemp(HeatingSystem& heater, int targetTemp)
+    {
+        if (currentTemperature < targetTemp)
+        {
+            heater.turnOn();
+        }
+        else
+        {
+            heater.turnOff();
+        }
+
+    }
+
 };
 #include <iostream>
 #include <string>
@@ -63,20 +84,26 @@ public:
     void returnBook() {
         isAvailable = true;
     }
-};
 
-class Library {
-public:
-    void processBookBorrowing(Book& book) {
-        // Violates Tell, Don't Ask
-        if (book.checkAvailability()) {
-            book.borrowBook();
+    void tryTake()
+    {
+        if (checkAvailability()) {
+            borrowBook();
             std::cout << "Book borrowed successfully." << std::endl;
         }
         else {
             std::cout << "Book is not available for borrowing." << std::endl;
         }
     }
+};
+
+class Library {
+public:
+    void processBookBorrowing(Book& book) {
+        // Violates Tell, Don't Ask
+        book.tryTake();
+    }
+
 };
 
 class Player {
@@ -102,14 +129,26 @@ public:
     void useAmmo() {
         ammo--;
     }
+
+    bool canPlayerRespond()
+    {
+        if (ammo <= 0 || health <= 0)
+        {
+            takeDamage(10);
+            return false;
+        }
+        else
+        {
+            return true;
+        }
+    }
 };
 
 class Game {
 public:
     void enemyAttack(Player& player) {
-        if (player.getHealth() > 0 && player.getAmmo() > 0) {
-            player.takeDamage(10);
-            player.useAmmo();
+        if (player.canPlayerRespond()) {
+           
             std::cout << "Player attacked and used ammo." << std::endl;
         }
         else {
@@ -123,17 +162,12 @@ int main() {
     //////////////////////////////////////////////////////////////////
     // Exercise 1
     //////////////////////////////////////////////////////////////////
- 
+
     BankAccount account(1000.0);
 
-    // Violation of Tell, Don't Ask
-    if (account.getBalance() > 500) {
-        account.withdraw(500);
-        std::cout << "Withdrawal successful. New balance: $" << account.getBalance() << std::endl;
-    }
-    else {
-        std::cout << "Insufficient funds for withdrawal." << std::endl;
-    }
+    // Violation of Tell, Don't Ask       
+    account.withdraw(500);
+
     //////////////////////////////////////////////////////////////////
     // Exercise 2
     //////////////////////////////////////////////////////////////////
@@ -141,20 +175,17 @@ int main() {
     Thermostat thermostat(18.5);
     HeatingSystem heating;
 
-    if (thermostat.getCurrentTemperature() < 20.0) {
-        heating.turnOn();
-    }
-    else {
-        heating.turnOff();
-    }
-    
+    thermostat.keepTemp(heating, 20);
+
     //////////////////////////////////////////////////////////////////
     // Exercise 3
     //////////////////////////////////////////////////////////////////
 
+
     Book myBook("1984");
     Library library;
 
+    // Don't change client if possible - keep library
     library.processBookBorrowing(myBook);  // First borrow should succeed
     library.processBookBorrowing(myBook);  // Second attempt should show not available
 
